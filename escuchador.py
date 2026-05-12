@@ -20,7 +20,7 @@ client = OpenAI(
 
 # --- CONFIGURACIÓN EVOLUTION API ---
 EVOLUTION_URL_BASE = "https://evolution-api-production-fa6b.up.railway.app"
-INSTANCIA = "Agencia_IA"
+INSTANCIA = "teste"
 WPP_URL = f"{EVOLUTION_URL_BASE}/message/sendText/{INSTANCIA}"
 WPP_APIKEY = "benjorro_secret_key"
 WPP_HEADERS = {"apikey": WPP_APIKEY, "Content-Type": "application/json"}
