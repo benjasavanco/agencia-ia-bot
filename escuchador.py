@@ -19,7 +19,7 @@ client = OpenAI(
 )
  
 # --- CONFIGURACIÓN EVOLUTION API ---
-EVOLUTION_URL_BASE = "https://evolution-api-production-fa6b.up.railway.app"
+EVOLUTION_URL_BASE = "https://determined-sparkle-production.up.railway.app"
 INSTANCIA = "teste"
 WPP_URL = f"{EVOLUTION_URL_BASE}/message/sendText/{INSTANCIA}"
 WPP_APIKEY = "benjorro_secret_key"
