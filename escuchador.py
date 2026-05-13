@@ -20,10 +20,12 @@ client = OpenAI(
 )
 
 # --- CONFIGURACIÓN EVOLUTION API ---
-EVOLUTION_URL_BASE = "https://determined-sparkle-production.up.railway.app"
-INSTANCIA = "teste2"
+# Esto busca CUALQUIER nombre que hayas puesto en Railway
+EVOLUTION_URL_BASE = os.environ.get("EVOLUTION_URL") or os.environ.get("EVOLUTION_URL_BASE") or "https://determined-sparkle-production.up.railway.app"
+INSTANCIA = os.environ.get("INSTANCIA") or "teste2"
+
 WPP_URL = f"{EVOLUTION_URL_BASE}/message/sendText/{INSTANCIA}"
-WPP_APIKEY = "benjorro_secret_key"
+WPP_APIKEY = os.environ.get("WPP_APIKEY") or "benjorro_secret_key"
 WPP_HEADERS = {"apikey": WPP_APIKEY, "Content-Type": "application/json"}
 
 def normalize_number(number_str: str) -> str:
