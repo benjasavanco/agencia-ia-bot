@@ -51,6 +51,5 @@ def handle_webhook():
     return jsonify({"status": "success"}), 200
 
 if __name__ == '__main__':
-    # Railway inyecta el puerto automáticamente
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.get', port=port)
+    app.run(host='0.0.0.0', port=port)
