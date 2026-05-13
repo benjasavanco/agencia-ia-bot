@@ -114,5 +114,6 @@ def recibir_mensaje():
     return jsonify({"status": "success"}), 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
+    # Railway inyecta el puerto automáticamente en la variable PORT
+    port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
