@@ -9,7 +9,7 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # --- CONFIGURACIÓN IA ---
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY") or "TU_KEY_POR_DEFECTO"
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY") or "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"
 OPENAI_BASE_URL = "https://openrouter.ai/api/v1"
 
 client = OpenAI(
