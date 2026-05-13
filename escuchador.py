@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify
 from openai import OpenAI
 import requests
@@ -24,23 +25,6 @@ INSTANCIA = "teste2"
 WPP_URL = f"{EVOLUTION_URL_BASE}/message/sendText/{INSTANCIA}"
 WPP_APIKEY = "benjorro_secret_key"
 WPP_HEADERS = {"apikey": WPP_APIKEY, "Content-Type": "application/json"}
- 
-# --- ARCHIVOS DE DATOS ---
-MAPEO_FILE = "lid_map.json"        # lid_digits -> numero_real
-PENDIENTES_FILE = "pendientes.json" # lid_digits -> mensaje_original pendiente
- 
-def cargar_json(path):
-    if os.path.exists(path):
-        with open(path, "r") as f:
-            return json.load(f)
-    return {}
- 
-def guardar_json(path, data):
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2)
- 
-lid_map = cargar_json(MAPEO_FILE)
-pendientes = cargar_json(PENDIENTES_FILE)
  
 def normalize_number(number_str: str) -> str:
     return re.sub(r'\D', '', number_str or "")
@@ -71,8 +55,6 @@ def consultar_ia(mensaje_cliente: str) -> str:
  
 @app.route('/webhook', methods=['POST'])
 def recibir_mensaje():
-    global lid_map, pendientes
- 
     datos = request.json or {}
     event = datos.get('event')
     data = datos.get('data', {})
@@ -94,65 +76,25 @@ def recibir_mensaje():
     if not mensaje_cliente:
         return jsonify({"status": "no_message"}), 200
  
-    # --- RESOLVER @lid ---
-    if "@lid" in remote_jid:
-        lid_digits = normalize_number(remote_jid.split('@')[0])
-        logging.warning("remoteJid es @lid: %s", lid_digits)
+    # Siempre responder al JID original, sea @lid o @s.whatsapp.net
+    # Evolution API v1 soporta enviar a @lid directamente
+    jid_destino = remote_jid
  
-        # 1. ¿Ya lo tenemos guardado?
-        if lid_digits in lid_map:
-            remote_jid = f"{lid_map[lid_digits]}@s.whatsapp.net"
-            logging.info("@lid resuelto desde archivo: %s", remote_jid)
+    # Si viene participant válido (no lid), usarlo como destino
+    participant = data.get('participant', '')
+    if participant and '@lid' not in participant and participant:
+        jid_destino = participant
+        logging.info("Usando participant como destino: %s", jid_destino)
+    else:
+        logging.info("Usando remoteJid como destino: %s", jid_destino)
  
-        # 2. ¿Viene el número real en 'participant'?
-        elif data.get('participant') and "@lid" not in data.get('participant', ''):
-            remote_jid = data['participant']
-            numero = normalize_number(remote_jid.split('@')[0])
-            lid_map[lid_digits] = numero
-            guardar_json(MAPEO_FILE, lid_map)
-            logging.info("@lid resuelto desde participant: %s", remote_jid)
- 
-        # 3. ¿Está esperando que nos diga su nombre? (viene respuesta al pedido)
-        elif lid_digits in pendientes:
-            # El usuario respondió con su nombre — lo usamos como número ficticio
-            # y guardamos el LID para que el bot pueda responderle
-            numero_ficticio = lid_digits  # usamos el propio LID como clave
-            lid_map[lid_digits] = numero_ficticio
-            guardar_json(MAPEO_FILE, lid_map)
- 
-            # Recuperar mensaje original pendiente
-            mensaje_original = pendientes.pop(lid_digits, "")
-            guardar_json(PENDIENTES_FILE, pendientes)
- 
-            remote_jid_respuesta = f"{lid_digits}@lid"
- 
-            # Responder al mensaje original
-            if mensaje_original:
-                respuesta = consultar_ia(mensaje_original)
-                enviar_mensaje(remote_jid_respuesta, respuesta)
- 
-            logging.info("LID %s registrado y mensaje original procesado", lid_digits)
-            return jsonify({"status": "lid_resolved"}), 200
- 
-        # 4. LID desconocido — guardar mensaje y pedir identificación
-        else:
-            logging.error("No se pudo resolver @lid %s — pidiendo identificación", lid_digits)
-            pendientes[lid_digits] = mensaje_cliente
-            guardar_json(PENDIENTES_FILE, pendientes)
- 
-            # Responder directamente al JID del lid
-            remote_jid_lid = f"{lid_digits}@lid"
-            enviar_mensaje(remote_jid_lid, "hola! para poder ayudarte necesito que me digas tu nombre 👋")
-            return jsonify({"status": "lid_pending_name"}), 200
- 
-    # --- FLUJO NORMAL ---
-    numero_cliente_digits = normalize_number(remote_jid.split('@')[0])
-    print(f"📩 Mensaje de {numero_cliente_digits}: {mensaje_cliente}")
+    numero_log = normalize_number(remote_jid.split('@')[0])
+    print(f"📩 Mensaje de {numero_log}: {mensaje_cliente}")
  
     respuesta_ia = consultar_ia(mensaje_cliente)
  
     try:
-        enviar_mensaje(remote_jid, respuesta_ia)
+        enviar_mensaje(jid_destino, respuesta_ia)
     except requests.RequestException as e:
         logging.exception("Error al enviar a Evolution API: %s", e)
         return jsonify({"status": "error", "detail": "request_failed"}), 500
