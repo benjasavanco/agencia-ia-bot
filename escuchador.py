@@ -44,6 +44,11 @@ def privacidad():
     <p>Contacto: matisavanco89@gmail.com</p>
     """, 200
 
+@app.route('/test', methods=['GET'])
+def test_send():
+    result = send_whatsapp_message('549351769854', '¡Hola! Soy KonversIA, tu bot de WhatsApp con IA. 🤖')
+    return jsonify(result)
+
 @app.route('/webhook', methods=['GET'])
 def verify_webhook():
     mode = request.args.get('hub.mode')
