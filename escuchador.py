@@ -35,6 +35,21 @@ def send_whatsapp_message(to, text):
     print(f"Respuesta Meta: {response.status_code} - {response.text}")
     return response.json()
 
+@app.route('/registrar', methods=['GET'])
+def registrar_numero():
+    url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/register"
+    headers = {
+        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messaging_product": "whatsapp",
+        "pin": "000000"
+    }
+    response = requests.post(url, json=payload, headers=headers, timeout=10)
+    print(f"Registro: {response.status_code} - {response.text}")
+    return jsonify(response.json())
+
 @app.route('/privacidad', methods=['GET'])
 def privacidad():
     return """
