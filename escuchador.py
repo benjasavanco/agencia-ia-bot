@@ -35,6 +35,15 @@ def send_whatsapp_message(to, text):
     print(f"Respuesta Meta: {response.status_code} - {response.text}")
     return response.json()
 
+@app.route('/privacidad', methods=['GET'])
+def privacidad():
+    return """
+    <h1>Política de Privacidad - KonversIA</h1>
+    <p>KonversIA recopila únicamente los mensajes de WhatsApp necesarios para responder consultas.</p>
+    <p>No compartimos datos con terceros.</p>
+    <p>Contacto: matisavanco89@gmail.com</p>
+    """, 200
+
 @app.route('/webhook', methods=['GET'])
 def verify_webhook():
     mode = request.args.get('hub.mode')
@@ -48,27 +57,21 @@ def verify_webhook():
 def handle_webhook():
     payload = request.json or {}
     print(f"PAYLOAD RECIBIDO: {payload}")
-
     try:
         entry = payload['entry'][0]
         changes = entry['changes'][0]
         value = changes['value']
-
         if 'messages' not in value:
             print("No hay mensajes en el payload")
             return jsonify({"status": "ignored"}), 200
-
         message = value['messages'][0]
         print(f"MENSAJE: {message}")
-
         if message.get('type') != 'text':
             print(f"Tipo de mensaje no soportado: {message.get('type')}")
             return jsonify({"status": "ignored"}), 200
-
         from_number = message['from']
         text = message['text']['body']
         print(f"DE: {from_number} - TEXTO: {text}")
-
         completion = client.chat.completions.create(
             model="google/gemini-2.0-flash-001",
             messages=[
@@ -76,17 +79,13 @@ def handle_webhook():
                 {"role": "user", "content": text}
             ]
         )
-
         ai_response = completion.choices[0].message.content
         print(f"RESPUESTA IA: {ai_response[:100]}")
-
         send_whatsapp_message(from_number, ai_response)
-
     except Exception as e:
         print(f"ERROR: {e}")
         import traceback
         traceback.print_exc()
-
     return jsonify({"status": "success"}), 200
 
 if __name__ == '__main__':
